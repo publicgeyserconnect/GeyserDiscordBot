@@ -5,7 +5,13 @@ aliases: ps, ps4, ps5
 
 [__***Playstation***__](https://www.geyserconnect.net/playstation.htm)
 
-You will use the address of either `us.geyserconnect.net` or `eu.geyserconnect.net` with port `19132` in any of the methods listed below:
+You will use one of the following addresses:
+
+`us.geyserconnect.net`
+`eu.geyserconnect.net`
+`beta.geyserconnect.net`
+
+with port `19132` in any of the methods listed below:
 
 Choose a method based on what type of device you own:
 

@@ -4,10 +4,8 @@ type: text
 
 You may be seeing this because you asked about whether we have another regional DNS server.
 
-At the moment, we only have one DNS, and two service regions (U.S. and E.U). The DNS server directs to the primary server in the U.S.
-
-However, after connecting, you may go to "Geyser Servers" and select "EU Geyserconnect Node" to transfer to the EU server.
-This will completely transfer you from the U.S. server to the E.U. server.
+At the moment, we only have one DNS, and you have the option to select one of 3 servers. The U.S. and the Experimental servers are in North America, and the EU server is in Belgium.
+The Experimental server allows players to use the Nether roof, unlike the main servers.
 
 Please note that this only effects connecting to Java servers, and is not necessary for Bedrock or Geyser-enabled servers.
 
