@@ -3,6 +3,8 @@ aliases: ps, ps4, ps5
 
 ---
 
+**This is a last resort if the Friends feature doesn't work for you. For more info on this, run the `!!friends` command in <#795436293999165450>**
+
 [__***Playstation***__](https://www.geyserconnect.net/playstation.htm)
 
 You will use one of the following addresses:

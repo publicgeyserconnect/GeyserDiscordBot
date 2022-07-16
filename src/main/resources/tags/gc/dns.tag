@@ -1,5 +1,5 @@
 type: text
-aliases: console, consoles, xbox, switch
+aliases: xbox, switch
 
 ---
 

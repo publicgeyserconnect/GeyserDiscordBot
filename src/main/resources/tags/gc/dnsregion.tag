@@ -4,7 +4,7 @@ type: text
 
 You may be seeing this because you asked about whether we have another regional DNS server.
 
-At the moment, we only have one DNS, and you have the option to select one of 3 servers. The U.S. and the Experimental servers are in North America, and the EU server is in Belgium.
+At the moment, we only have one DNS, and you have the option to select one of 3 servers. Read the "message of the day" line underneath the server name to determine which server is which. The U.S. and the Experimental servers are in North America, and the EU server is in Belgium.
 The Experimental server allows players to use the Nether roof, unlike the main servers.
 
 Please note that this only effects connecting to Java servers, and is not necessary for Bedrock or Geyser-enabled servers.

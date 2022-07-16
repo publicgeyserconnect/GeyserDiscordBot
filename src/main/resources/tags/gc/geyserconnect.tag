@@ -12,30 +12,15 @@ Europe: `eu.geyserconnect.net`
 Experimental: `beta.geyserconnect.net`
 *Port:* `19132`
 
-__***Switch/XBox:***__
-*Primary DNS:*
-44.193.156.219
+__***Any console user***__
+Got to your friends tab and select "add friend." 
+Enter *Public GC* and press enter.
+Select "Add friend" on the info page.
+Wait up to 2 minutes for our system to friend you back.
+Go back to your friends tab and select the US Geyser Connect Entry.
 
-*Secondary DNS:*
-I use my router's "Default gateway" but there are others (Google, your ISP, other free ones, etc. Other addresses to try include 1.1.1.1 and 8.8.4.4 and 8.8.8.8)
-*Remember to restart your console after any changes to these settings to apply them!*
+P.S. You may add and remove us as friends freely. Our system will respond in kind as quickly as possible.
 
-__***XBox refusing DNS settings:***__
-If restarting your XBox doesn't resolve the issue, disable IPv6 in your router. If you don't have that option, try the PlayStation option.
+*For more info and limitations on this system, type `!!friends` in <#795436293999165450>
 
-__***PlayStation***__
-**iOS:** Download [BedrockTogether](https://apps.apple.com/us/app/bedrocktogether/id1534593376), and use the Win10/Mobile settings in the app, then go to your game's "Friends" tab.
-
-**Android:** Download the [GeyserMC Android app](https://ci.opencollab.dev/job/GeyserMC/job/GeyserAndroid/job/master/), select "LAN Proxy" or "Join a Bedrock Server" and use the Win10/Mobile setting. Then go to your game's "Friends" tab.
-If you can't install APKs, you may use [MC Server Connector](https://play.google.com/store/apps/details?id=com.smokiem.mcserverconnector) instead, but it has ads and in-app purchases unlike the GMC app.
-
-**PC:** Download and setup [Phantom](https://github.com/jhead/phantom) on your computer, you may also be able to run the android app from [Bluestacks](https://www.bluestacks.com/). Use the Win10/Mobile settings to set it up and make your way to your game's "Friends" tab.
-
-
-General Information and Switch/XBox setup:
-https://youtu.be/i0OSOvTIiUQ
-
-For PS4/5 and stubborn XBox:
-https://www.youtube.com/watch?v=TGFgkJ_4C_Q
-
-***Warning:*** Due to Geyser handling certain things different to a vanilla Java client you may get banned using this (see `!!anticheat` in <#795436293999165450> for more info). As well as this, if you use online mode you are sending your Java account credentials to a third party.
+*For a more advanced, and arguably better setup, type `!!dns` in <#795436293999165450>
