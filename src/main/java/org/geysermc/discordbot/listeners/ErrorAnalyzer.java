@@ -25,12 +25,15 @@
 
 package org.geysermc.discordbot.listeners;
 
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import com.rtm516.stackparser.Parser;
 import com.rtm516.stackparser.StackException;
 import com.rtm516.stackparser.StackLine;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.MessageEmbed;
+import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.sourceforge.tess4j.ITesseract;
@@ -44,13 +47,15 @@ import pw.chew.chewbotcca.util.RestClient;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
-import java.awt.image.*;
-import java.io.*;
-import java.util.*;
+import java.awt.image.BufferedImage;
+import java.io.IOException;
+import java.time.Instant;
 import java.util.List;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -58,8 +63,14 @@ public class ErrorAnalyzer extends ListenerAdapter {
     private final Map<Pattern, String> logUrlPatterns;
     private static final ExecutorService EXECUTOR = Executors.newSingleThreadExecutor();
     private static final Pattern BRANCH_PATTERN = Pattern.compile("Geyser .* \\(git-[\\da-zA-Z]+-([\\da-zA-Z]{7})\\)");
+    private final Cache<User, Integer> messageCache;
 
     public ErrorAnalyzer() {
+        // Cache the last message sent by a user to avoid spamming them with images.
+        this.messageCache = CacheBuilder.newBuilder()
+                .expireAfterWrite(1, TimeUnit.MINUTES)
+                .build();
+
         logUrlPatterns = new HashMap<>();
 
         // Log url patterns
@@ -83,9 +94,30 @@ public class ErrorAnalyzer extends ListenerAdapter {
             return;
         }
 
+        // Max amount of images for ocr, default set on 2; 3 images per message or 3 images per 3 messages within a minute.
+        int maxImages = 2;
         // Check attachments
-        for (Message.Attachment attachment : event.getMessage().getAttachments()) {
+        for (ListIterator<Message.Attachment> it = event.getMessage().getAttachments().listIterator(); it.hasNext();) {
+            // When index is higher than 2 break loop.
+            if (it.nextIndex() > maxImages) {
+                break;
+            }
+
+            Message.Attachment attachment = it.next();
             if (attachment.isImage()) {
+                // Check if author sent an image
+                Integer count = messageCache.getIfPresent(event.getAuthor());
+                if (count == null) {
+                    // If author has not sent an image put them in to cache.
+                    messageCache.put(event.getAuthor(), 0);
+                } else {
+                    // Author has already sent an image, up the count.
+                    messageCache.put(event.getAuthor(), count + 1);
+                }
+                // Author has sent too many images, ocr ignore.
+                if (count != null && count >= maxImages) {
+                    return;
+                }
 
                 EmbedBuilder embedBuilder = new EmbedBuilder();
                 // run ocr in a new block-able thread.
@@ -97,10 +129,20 @@ public class ErrorAnalyzer extends ListenerAdapter {
                         embedBuilder.setTitle("Found errors in the image!");
                         embedBuilder.setColor(BotColors.FAILURE.getColor());
                         // scale img -> needed for IOS print screens.
-                        BufferedImage bi = ImageIO.read(attachment.retrieveInputStream().get());
+                        BufferedImage bi = ImageIO.read(attachment.getProxy().download().get());
                         Dimension newMaxSize = new Dimension(2000,1400);
                         BufferedImage resizedImg = Scalr.resize(bi, Scalr.Method.BALANCED, newMaxSize.width, newMaxSize.height);
-                        errorHandler(tesseract.doOCR(resizedImg), embedBuilder, event);
+                        String textFromImage = tesseract.doOCR(resizedImg);
+                        // Send ocr reading to logs channel.
+                        ServerSettings.getLogChannel(event.getGuild()).sendMessageEmbeds(new EmbedBuilder()
+                                .setTitle("OCR Reading")
+                                .addField("Image link", "[Jump to Image](" + event.getJumpUrl() + ")", true)
+                                .addField("Reading", textFromImage, false)
+                                .setFooter("ID: " + event.getAuthor().getId())
+                                .setTimestamp(Instant.now())
+                                .setColor(BotColors.NEUTRAL.getColor())
+                                .build()).queue();
+                        errorHandler(textFromImage, embedBuilder, event);
                     } catch (TesseractException | InterruptedException | IOException | ExecutionException e) {
                         handleLog(event, e.getMessage(), true);
                     }
@@ -120,7 +162,7 @@ public class ErrorAnalyzer extends ListenerAdapter {
                     extensions.add("0");
                 }
                 if (extensions.contains(attachment.getFileExtension())) {
-                    handleLog(event, RestClient.get(attachment.getUrl()), false);
+                    handleLog(event, RestClient.simpleGetString(attachment.getUrl()), false);
                 }
             }
         }
@@ -150,7 +192,7 @@ public class ErrorAnalyzer extends ListenerAdapter {
             content = rawContent;
         } else {
             // We didn't find a url so use the message content
-            content = RestClient.get(url);
+            content = RestClient.simpleGetString(url);
         }
 
         handleLog(event, content, false);
@@ -228,7 +270,7 @@ public class ErrorAnalyzer extends ListenerAdapter {
                     // The error was not already listed and no fix was found. Add some info about the error
 
                     for (StackLine line : exception.getLines()) {
-                        if (line.getStackPackage() != null && line.getStackPackage().startsWith("org.geysermc") && !line.getStackPackage().contains("shaded")) {
+                        if (line.getStackPackage() != null && line.getLine() != null && line.getStackPackage().startsWith("org.geysermc") && !line.getStackPackage().contains("shaded")) {
                             // Get the file url
                             String lineUrl = fileFinder.getFileUrl(line.getSource(), Integer.parseInt(line.getLine()));
 

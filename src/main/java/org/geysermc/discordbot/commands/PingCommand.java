@@ -40,8 +40,8 @@ import net.dv8tion.jda.api.interactions.InteractionHook;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 import org.geysermc.discordbot.util.BotColors;
-import org.geysermc.discordbot.util.BotHelpers;
 import org.geysermc.discordbot.util.MessageHelper;
+import org.geysermc.discordbot.util.NetworkUtils;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -93,7 +93,7 @@ public class PingCommand extends SlashCommand {
     private MessageEmbed handle(String ip) {
         // Check we were given a valid IP/domain
         if (!ip.matches("[\\w.\\-:]+")) {
-            return MessageHelper.errorResponse(null, "IP invalid", "The given IP appears to be invalid so won't be queried. If you believe this is incorrect please contact an admin.");
+            return MessageHelper.errorResponse(null, "IP invalid", "The given IP appears to be invalid and won't be queried. If you believe this is incorrect please contact an admin.");
         }
 
         // Make sure the IP is not longer than 128 characters
@@ -109,6 +109,11 @@ public class PingCommand extends SlashCommand {
         String[] ipParts = ip.split(":");
 
         String hostname = ipParts[0];
+
+        if (NetworkUtils.isInternalIP(hostname)) {
+            return MessageHelper.errorResponse(null, "IP invalid", "The given IP appears to be an internal address and won't be queried.");
+        }
+
         int jePort = 25565;
         int bePort = 19132;
 
@@ -157,7 +162,7 @@ public class PingCommand extends SlashCommand {
 
             bedrockInfo = "**MOTD:** \n```\n" + MCPingUtil.stripColors(pong.getMotd()) + (pong.getSubMotd() != null ? "\n" + MCPingUtil.stripColors(pong.getSubMotd()) : "") + "\n```\n" +
                     "**Players:** " + pong.getPlayerCount() + "/" + pong.getMaximumPlayerCount() + "\n" +
-                    "**Version:** " + BotHelpers.getBedrockVersionName(pong.getProtocolVersion()) + " (" + pong.getProtocolVersion() + ")";
+                    "**Version:** " + pong.getVersion() + " (" + pong.getProtocolVersion() + ")";
             success = true;
         } catch (InterruptedException | ExecutionException ignored) {
         } finally {

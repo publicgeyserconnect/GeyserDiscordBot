@@ -28,6 +28,7 @@ package org.geysermc.discordbot.listeners;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import net.dv8tion.jda.api.EmbedBuilder;
+import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.audit.ActionType;
 import net.dv8tion.jda.api.audit.AuditLogEntry;
 import net.dv8tion.jda.api.entities.Guild;
@@ -37,9 +38,7 @@ import net.dv8tion.jda.api.events.guild.GuildBanEvent;
 import net.dv8tion.jda.api.events.guild.GuildUnbanEvent;
 import net.dv8tion.jda.api.events.guild.member.GuildMemberJoinEvent;
 import net.dv8tion.jda.api.events.guild.member.GuildMemberRemoveEvent;
-import net.dv8tion.jda.api.events.guild.voice.GuildVoiceJoinEvent;
-import net.dv8tion.jda.api.events.guild.voice.GuildVoiceLeaveEvent;
-import net.dv8tion.jda.api.events.guild.voice.GuildVoiceMoveEvent;
+import net.dv8tion.jda.api.events.guild.voice.GuildVoiceUpdateEvent;
 import net.dv8tion.jda.api.events.message.MessageDeleteEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.events.message.MessageUpdateEvent;
@@ -240,6 +239,9 @@ public class LogHandler extends ListenerAdapter {
             return;
         }
 
+        // Do this before the invite log just incase its removed
+        putCacheMessage(event.getGuild(), event.getMessage());
+
         for (String inviteCode : event.getMessage().getInvites()) {
             try {
                 Invite invite = Invite.resolve(event.getJDA(), inviteCode, true).complete();
@@ -256,10 +258,13 @@ public class LogHandler extends ListenerAdapter {
                             .setColor(BotColors.NEUTRAL.getColor())
                             .build()).queue();
                 } catch (IllegalArgumentException ignored) { }
+
+                // Bypass for users with MESSAGE_MANAGE permission
+                if (!event.getMember().hasPermission(Permission.MESSAGE_MANAGE) && !ServerSettings.getList(event.getGuild().getIdLong(), "allowed-invites").contains(invite.getGuild().getId())) {
+                    event.getMessage().delete().complete();
+                }
             } catch (ErrorResponseException ignored) { }
         }
-
-        putCacheMessage(event.getGuild(), event.getMessage());
     }
 
     @Override
@@ -308,40 +313,28 @@ public class LogHandler extends ListenerAdapter {
     }
 
     @Override
-    public void onGuildVoiceJoin(@NotNull GuildVoiceJoinEvent event) {
-        try {
-            ServerSettings.getLogChannel(event.getGuild()).sendMessageEmbeds(new EmbedBuilder()
-                    .setAuthor(event.getMember().getUser().getAsTag(), null, event.getMember().getUser().getAvatarUrl())
-                    .setDescription(event.getMember().getAsMention() + " **joined voice channel #" + event.getChannelJoined().getName() + "**")
-                    .setFooter("ID: " + event.getMember().getId())
-                    .setTimestamp(Instant.now())
-                    .setColor(BotColors.SUCCESS.getColor())
-                    .build()).queue();
-        } catch (IllegalArgumentException ignored) { }
-    }
+    public void onGuildVoiceUpdate(@NotNull GuildVoiceUpdateEvent event) {
+        boolean isJoin = event.getOldValue() == null && event.getNewValue() != null;
+        boolean isLeave = event.getOldValue() != null && event.getNewValue() == null;
+        boolean isMove = !isJoin && !isLeave;
 
-    @Override
-    public void onGuildVoiceMove(@NotNull GuildVoiceMoveEvent event) {
-        try {
-            ServerSettings.getLogChannel(event.getGuild()).sendMessageEmbeds(new EmbedBuilder()
-                    .setAuthor(event.getMember().getUser().getAsTag(), null, event.getMember().getUser().getAvatarUrl())
-                    .setDescription(event.getMember().getAsMention() + " **switched voice channel `#" + event.getChannelLeft().getName() + "` -> `#" + event.getChannelJoined().getName() + "`**")
-                    .setFooter("ID: " + event.getMember().getId())
-                    .setTimestamp(Instant.now())
-                    .setColor(BotColors.SUCCESS.getColor())
-                    .build()).queue();
-        } catch (IllegalArgumentException ignored) { }
-    }
 
-    @Override
-    public void onGuildVoiceLeave(@NotNull GuildVoiceLeaveEvent event) {
+        String description = "";
+        if (isJoin) {
+            description = event.getMember().getAsMention() + " **joined voice channel " + event.getChannelJoined().getAsMention() + "**";
+        } else if (isMove) {
+            description = event.getMember().getAsMention() + " **switched voice channel " + event.getChannelLeft().getAsMention() + " -> " + event.getChannelJoined().getAsMention() + "**";
+        } else if (isLeave) {
+            description = event.getMember().getAsMention() + " **left voice channel " + event.getChannelLeft().getAsMention() + "**";
+        }
+
         try {
             ServerSettings.getLogChannel(event.getGuild()).sendMessageEmbeds(new EmbedBuilder()
                     .setAuthor(event.getMember().getUser().getAsTag(), null, event.getMember().getUser().getAvatarUrl())
-                    .setDescription(event.getMember().getAsMention() + " **left voice channel #" + event.getChannelLeft().getName() + "**")
+                    .setDescription(description)
                     .setFooter("ID: " + event.getMember().getId())
                     .setTimestamp(Instant.now())
-                    .setColor(BotColors.FAILURE.getColor())
+                    .setColor((isJoin || isMove) ? BotColors.SUCCESS.getColor() : BotColors.FAILURE.getColor())
                     .build()).queue();
         } catch (IllegalArgumentException ignored) { }
     }
