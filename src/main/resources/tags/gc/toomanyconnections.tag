@@ -8,4 +8,4 @@ It is also possible the server has limited the max number of connections from a 
 
 Some reports from various admins with this issue suggest that the host may need to restart their BungeeCord/Server to clear the issue as well.
 
-An attempt to resolce this would be to use one of the other servers, but no promises can be made.
+An attempt to resolve this would be to use one of the other servers, but no promises can be made.

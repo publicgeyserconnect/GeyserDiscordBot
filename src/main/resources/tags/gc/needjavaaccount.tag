@@ -3,5 +3,7 @@ issues: you need a java edition account to play on this server
 
 ---
 
-If you are getting a form with 'You need a Java Edition Account to play on this server' and you do not have a Java account, then you will need to install Floodgate.
-Run !download floodgate in <#613194762249437245> for additional information or see the setup guide: https://wiki.geysermc.org/floodgate/setup/
+Please remember that everything relating to Bedrock and Java are separate, even if using the same MS account.
+This can happen for a couple of reasons:
+- You don't have a paid version of java associated with the account info you entered.
+- You don't have a skin assigned to your java character. Go to minecraft.net to fix this one.
