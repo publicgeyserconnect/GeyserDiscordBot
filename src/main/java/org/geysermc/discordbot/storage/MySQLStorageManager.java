@@ -35,11 +35,7 @@ import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import org.geysermc.discordbot.GeyserBot;
 import org.geysermc.discordbot.util.PropertiesManager;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.sql.*;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -52,7 +48,7 @@ public class MySQLStorageManager extends AbstractStorageManager {
     public void setupStorage() {
         try {
             Class.forName("com.mysql.cj.jdbc.Driver");
-            connection = DriverManager.getConnection("jdbc:mysql://" + PropertiesManager.getHost() + "/" + PropertiesManager.getDatabase(), PropertiesManager.getUser(), PropertiesManager.getPass());
+            connection = DriverManager.getConnection("jdbc:mysql://" + PropertiesManager.getHost() + ":" + 3036 + "/" + PropertiesManager.getDatabase(), PropertiesManager.getUser(), PropertiesManager.getPass());
 
             Statement createTables = connection.createStatement();
             createTables.executeUpdate("CREATE TABLE IF NOT EXISTS `preferences` (`id` INT NOT NULL AUTO_INCREMENT, `server` BIGINT NOT NULL, `key` VARCHAR(32), `value` TEXT NOT NULL, PRIMARY KEY(`id`), UNIQUE KEY `pref_constraint` (`server`,`key`));");
@@ -60,6 +56,8 @@ public class MySQLStorageManager extends AbstractStorageManager {
             createTables.executeUpdate("CREATE TABLE IF NOT EXISTS `mod_log` (`id` INT NOT NULL AUTO_INCREMENT, `server` BIGINT NOT NULL, `time` BIGINT NOT NULL, `user` BIGINT NOT NULL, `action` VARCHAR(32) NOT NULL, `target` BIGINT NOT NULL, `reason` TEXT NOT NULL, PRIMARY KEY(`id`));");
             createTables.executeUpdate("CREATE TABLE IF NOT EXISTS `levels` (`id` INT NOT NULL AUTO_INCREMENT, `server` BIGINT NOT NULL, `user` BIGINT NOT NULL, `level` INT NOT NULL, `xp` INT NOT NULL, `messages` INT NOT NULL, PRIMARY KEY(`id`), UNIQUE KEY `level_constraint` (`server`,`user`));");
             createTables.executeUpdate("CREATE TABLE IF NOT EXISTS `slow_mode` (`channel` BIGINT NOT NULL, `server` BIGINT NOT NULL, `delay` INT NOT NULL, PRIMARY KEY(`channel`));");
+            createTables.executeUpdate("CREATE TABLE IF NOT EXISTS `mcxb` (NAME varchar(16), XUID char(36), DATE varchar(500), EMAIL varchar(500), PREMIUM boolean, ADMIN boolean, BOTNAME char(36), DISCORDID char(36));");
+
             createTables.close();
         } catch (ClassNotFoundException | SQLException e) {
             GeyserBot.LOGGER.error("Unable to connect to MySQL database!", e);
@@ -70,7 +68,8 @@ public class MySQLStorageManager extends AbstractStorageManager {
     public void closeStorage() {
         try {
             connection.close();
-        } catch (SQLException ignored) { }
+        } catch (SQLException ignored) {
+        }
     }
 
     @Override
@@ -84,7 +83,8 @@ public class MySQLStorageManager extends AbstractStorageManager {
             }
 
             getPreferenceValue.close();
-        } catch (SQLException ignored) { }
+        } catch (SQLException ignored) {
+        }
 
         return null;
     }
@@ -95,7 +95,8 @@ public class MySQLStorageManager extends AbstractStorageManager {
             Statement updatePreferenceValue = connection.createStatement();
             updatePreferenceValue.executeUpdate("INSERT INTO `preferences` (`server`, `key`, `value`) VALUES (" + serverID + ", '" + preference + "', '" + value + "') ON DUPLICATE KEY UPDATE `value`='" + value + "';");
             updatePreferenceValue.close();
-        } catch (SQLException ignored) { }
+        } catch (SQLException ignored) {
+        }
     }
 
     @Override
@@ -104,7 +105,8 @@ public class MySQLStorageManager extends AbstractStorageManager {
             Statement addPersistentRole = connection.createStatement();
             addPersistentRole.executeUpdate("INSERT INTO `persistent_roles` (`server`, `user`, `role`) VALUES (" + member.getGuild().getId() + ", " + member.getId() + ", " + role.getId() + ");");
             addPersistentRole.close();
-        } catch (SQLException ignored) { }
+        } catch (SQLException ignored) {
+        }
     }
 
     @Override
@@ -113,7 +115,8 @@ public class MySQLStorageManager extends AbstractStorageManager {
             Statement removePersistentRole = connection.createStatement();
             removePersistentRole.executeUpdate("DELETE FROM `persistent_roles` WHERE `server`=" + member.getGuild().getId() + " AND `user`=" + member.getId() + " AND `role`=" + role.getId() + ");");
             removePersistentRole.close();
-        } catch (SQLException ignored) { }
+        } catch (SQLException ignored) {
+        }
     }
 
     @Override
@@ -129,7 +132,8 @@ public class MySQLStorageManager extends AbstractStorageManager {
             }
 
             getPersistentRoles.close();
-        } catch (SQLException ignored) { }
+        } catch (SQLException ignored) {
+        }
 
         return roles;
     }
@@ -150,7 +154,8 @@ public class MySQLStorageManager extends AbstractStorageManager {
             }
 
             getLogEntry.close();
-        } catch (SQLException ignored) { }
+        } catch (SQLException ignored) {
+        }
 
         return -1;
     }
@@ -171,7 +176,8 @@ public class MySQLStorageManager extends AbstractStorageManager {
             }
 
             getLogEntry.close();
-        } catch (SQLException ignored) { }
+        } catch (SQLException ignored) {
+        }
 
         return logs;
     }
@@ -196,7 +202,8 @@ public class MySQLStorageManager extends AbstractStorageManager {
             }
 
             getLogEntry.close();
-        } catch (SQLException ignored) { }
+        } catch (SQLException ignored) {
+        }
 
         return null;
     }
@@ -207,7 +214,8 @@ public class MySQLStorageManager extends AbstractStorageManager {
             Statement updateLevelValue = connection.createStatement();
             updateLevelValue.executeUpdate("UPDATE `mod_log` SET `reason`='" + reason + "' WHERE `id`=" + id + ";");
             updateLevelValue.close();
-        } catch (SQLException ignored) { }
+        } catch (SQLException ignored) {
+        }
     }
 
     @Override
@@ -223,7 +231,8 @@ public class MySQLStorageManager extends AbstractStorageManager {
             getLevelValue.close();
 
             return new LevelInfo(0, 0, 0, 0);
-        } catch (SQLException ignored) { }
+        } catch (SQLException ignored) {
+        }
 
         return null;
     }
@@ -234,7 +243,8 @@ public class MySQLStorageManager extends AbstractStorageManager {
             Statement updateLevelValue = connection.createStatement();
             updateLevelValue.executeUpdate("INSERT INTO `levels` (`server`, `user`, `level`, `xp`, `messages`) VALUES (" + user.getGuild().getId() + ", " + user.getId() + ", " + levelInfo.getLevel() + ", " + levelInfo.getXp() + ", " + levelInfo.getMessages() + ") ON DUPLICATE KEY UPDATE `level`=" + levelInfo.getLevel() + ", `xp`=" + levelInfo.getXp() + ", `messages`=" + levelInfo.getMessages() + ";");
             updateLevelValue.close();
-        } catch (SQLException ignored) { }
+        } catch (SQLException ignored) {
+        }
     }
 
     @Override
@@ -249,7 +259,8 @@ public class MySQLStorageManager extends AbstractStorageManager {
             }
 
             getLevelValue.close();
-        } catch (SQLException ignored) { }
+        } catch (SQLException ignored) {
+        }
 
         return levels;
     }
@@ -267,7 +278,8 @@ public class MySQLStorageManager extends AbstractStorageManager {
             }
 
             getLogEntry.close();
-        } catch (SQLException ignored) { }
+        } catch (SQLException ignored) {
+        }
 
         return infos;
     }
@@ -278,6 +290,18 @@ public class MySQLStorageManager extends AbstractStorageManager {
             Statement updateLevelValue = connection.createStatement();
             updateLevelValue.executeUpdate("INSERT INTO `slow_mode` (`channel`, `server`, `delay`) VALUES (" + channel.getId() + ", " + channel.getGuild().getId() + ", " + delay + ") ON DUPLICATE KEY UPDATE `delay`=" + delay + ";");
             updateLevelValue.close();
-        } catch (SQLException ignored) { }
+        } catch (SQLException ignored) {
+        }
+    }
+
+    @Override
+    public void setPremium(String discordID, boolean premium) {
+        try {
+            Statement updatePremiumValue = connection.createStatement();
+            updatePremiumValue.executeUpdate( "UPDATE `mcxb` SET `PREMIUM`='" + premium + "' WHERE `DISCORDID`=" + discordID + ";");
+            updatePremiumValue.close();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

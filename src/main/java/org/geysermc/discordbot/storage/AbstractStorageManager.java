@@ -180,4 +180,13 @@ public abstract class AbstractStorageManager {
      * @param delay Delay between messages in seconds
      */
     public abstract void setSlowModeChannel(TextChannel channel, int delay);
+
+    /**
+     * Check if person has certain roles and update db.
+     *
+     * @param discordID Person discord ID.
+     * @param premium If person has premium.
+     */
+    public abstract void setPremium(String discordID, boolean premium);
+
 }
