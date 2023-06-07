@@ -37,8 +37,9 @@ public class RoleCheckHandler extends ListenerAdapter {
                 .map(Role::getName)
                 .anyMatch(ALLOWED_ROLES::contains);
 
+        GeyserBot.storageManager.setPremium(member.getId(), hasCorrectRole);
+
         if (hasCorrectRole) {
-            GeyserBot.storageManager.setPremium(member.getId(), true);
             // Send Embed
             EmbedBuilder embedBuilder = new EmbedBuilder();
             embedBuilder.setTitle("GeyserConnect Premium/Support");
