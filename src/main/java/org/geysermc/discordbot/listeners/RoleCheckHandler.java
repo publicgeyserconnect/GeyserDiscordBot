@@ -45,9 +45,9 @@ public class RoleCheckHandler extends ListenerAdapter {
             embedBuilder.setTitle("GeyserConnect Premium/Support");
 
             if (isNewRole) {
-                embedBuilder.setDescription("Hello, " + member.getNickname() + " You were given a premium role on GeyserConnect. Please log in to our website and link your Discord account to access our premium bots.");
+                embedBuilder.setDescription("Hello, " + member.getAsMention() + " You were given a premium role on GeyserConnect. Please log in to our website and link your Discord account to access our premium bots.");
             } else {
-                embedBuilder.setDescription("Hello, " + member.getNickname() + " Your roles were updated and still have access to premium bots.");
+                embedBuilder.setDescription("Hello, " + member.getAsMention() + " Your roles were updated and still have access to premium bots.");
             }
 
             embedBuilder.addField("GeyserConnect", "https://geyserconnect.net", false);
