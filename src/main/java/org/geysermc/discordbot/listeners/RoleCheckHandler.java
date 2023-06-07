@@ -1,73 +1,64 @@
-/*
- * Copyright (c) 2020-2023 GeyserMC. http://geysermc.org
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
- *
- * @author GeyserMC
- * @link https://github.com/GeyserMC/GeyserDiscordBot
- */
-
 package org.geysermc.discordbot.listeners;
 
+import net.dv8tion.jda.api.EmbedBuilder;
+import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Role;
+import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.events.guild.member.GuildMemberRoleAddEvent;
 import net.dv8tion.jda.api.events.guild.member.GuildMemberRoleRemoveEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import org.geysermc.discordbot.GeyserBot;
+import org.geysermc.discordbot.util.BotColors;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 public class RoleCheckHandler extends ListenerAdapter {
+    private static final String PREMIUM_CHANNEL_ID = "808149156102668328";
+    private static final Set<String> ALLOWED_ROLES = new HashSet<>(Arrays.asList(
+            "GeyserMC affiliates", "Systems Admin", "Supporters",
+            "Server Booster", "Patreon", "Personal Server Admin"
+    ));
 
     @Override
     public void onGuildMemberRoleAdd(GuildMemberRoleAddEvent event) {
-        Member m = event.getMember();
-        checkMemberRoles(m.getRoles(), m.getId());
+        Member member = event.getMember();
+        checkMemberRoles(member, event.getGuild(), true);
     }
 
     @Override
     public void onGuildMemberRoleRemove(GuildMemberRoleRemoveEvent event) {
-        Member m = event.getMember();
-        checkMemberRoles(m.getRoles(), m.getId());
+        Member member = event.getMember();
+        checkMemberRoles(member, event.getGuild(), false);
     }
 
-    public void checkMemberRoles(List<Role> roleList, String id) {
-        List<String> memberRoles = new ArrayList<>();
+    public void checkMemberRoles(Member member, Guild guild, boolean isNewRole) {
+        boolean hasCorrectRole = member.getRoles().stream()
+                .map(Role::getName)
+                .anyMatch(ALLOWED_ROLES::contains);
 
-        for (Role s : roleList) {
-            memberRoles.add(s.getName());
-        }
+        if (hasCorrectRole) {
+            GeyserBot.storageManager.setPremium(member.getId(), true);
+            // Send Embed
+            EmbedBuilder embedBuilder = new EmbedBuilder();
+            embedBuilder.setTitle("GeyserConnect Premium/Support");
 
-        GeyserBot.storageManager.setPremium(id, hasCorrectRole(memberRoles));
-        memberRoles.clear();
-    }
+            if (isNewRole) {
+                embedBuilder.setDescription("Hello, " + member.getNickname() + " You were given a premium role on GeyserConnect. Please log in to our website and link your Discord account to access our premium bots.");
+            } else {
+                embedBuilder.setDescription("Hello, " + member.getNickname() + " Your roles were updated and still have access to premium bots.");
+            }
 
-    public boolean hasCorrectRole(List<String> memberRoles) {
-        String[] allowedRoles = { "GeyserMC affiliates", "Systems Admin", "Supporters", "Server Booster", "Patreon", "Personal Server Admin" };
-        for (String roles : allowedRoles) {
-            if (memberRoles.stream().anyMatch(s -> s.contains(roles))) {
-                System.out.println(roles + " " + true);
-                return true;
+            embedBuilder.addField("GeyserConnect", "https://geyserconnect.net", false);
+            embedBuilder.setColor(BotColors.SUCCESS.getColor());
+
+            // Check if the TextChannel exists before sending the embedded message
+            TextChannel textChannel = guild.getTextChannelById(PREMIUM_CHANNEL_ID);
+            if (textChannel != null) {
+                textChannel.sendMessageEmbeds(embedBuilder.build()).queue();
+            } else {
+                System.out.println("TextChannel not found.");
             }
         }
-        return false;
     }
 }
