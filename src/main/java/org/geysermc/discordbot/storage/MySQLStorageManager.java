@@ -297,15 +297,24 @@ public class MySQLStorageManager extends AbstractStorageManager {
     @Override
     public void setPremium(String discordID, boolean premium) {
         try {
-            Statement statement = connection.createStatement();
-            ResultSet result = statement.executeQuery("SELECT * FROM `mcxb` WHERE `DISCORDID`=" + discordID + ";");
+            PreparedStatement statement = connection.prepareStatement("SELECT * FROM `mcxb` WHERE `DISCORDID`=?;");
+            statement.setString(1, discordID);
+            ResultSet result = statement.executeQuery();
 
             if (result.next()) {
                 // Discord ID exists, update the premium value
-                statement.executeUpdate("UPDATE `mcxb` SET `PREMIUM`='" + premium + "' WHERE `DISCORDID`=" + discordID + ";");
+                PreparedStatement updateStatement = connection.prepareStatement("UPDATE `mcxb` SET `PREMIUM`=? WHERE `DISCORDID`=?;");
+                updateStatement.setBoolean(1, premium);
+                updateStatement.setString(2, discordID);
+                updateStatement.executeUpdate();
+                updateStatement.close();
             } else {
                 // Discord ID does not exist, insert new record
-                statement.executeUpdate("INSERT INTO `mcxb` (`DISCORDID`, `PREMIUM`) VALUES (" + discordID + ", " + premium + ");");
+                PreparedStatement insertStatement = connection.prepareStatement("INSERT INTO `mcxb` (`DISCORDID`, `PREMIUM`) VALUES (?, ?);");
+                insertStatement.setString(1, discordID);
+                insertStatement.setBoolean(2, premium);
+                insertStatement.executeUpdate();
+                insertStatement.close();
             }
 
             result.close();
